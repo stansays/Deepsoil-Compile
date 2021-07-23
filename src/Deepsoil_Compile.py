@@ -144,6 +144,10 @@ def main():
     df_disp_comb = pd.DataFrame()
     df_strain_comb = pd.DataFrame()
     df_stress_comb = pd.DataFrame()
+    df_surf_GM = pd.DataFrame()
+    df_ampl_GM = pd.DataFrame()
+    df_ampl_xim_GM = pd.DataFrame()
+    pd.options.mode.use_inf_as_na = True
 
     for profile in reversed(profiles):
         mean_col = 'Mean ' + profile[8:]
@@ -156,6 +160,23 @@ def main():
                                 'Amplification Spectra', mean_col)
         df_ampl_xim_comb = df_next_comb(xlsx_RS, df_ampl_xim_comb,
                                 'Amplification x_IM,ref', mean_col)
+        if df_surf_GM.empty:
+            df_surf_GM = pd.read_excel(xlsx_RS,
+                            sheet_name='Surface GM Spectra', index_col=0)
+            df_ampl_GM = pd.read_excel(xlsx_RS,
+                            sheet_name='Amplification Spectra', index_col=0)
+            df_ampl_xim_GM = pd.read_excel(xlsx_RS,
+                            sheet_name='Amplification x_IM,ref', index_col=0)
+        else:
+            df_surf_GM = df_surf_GM.mul(pd.read_excel(
+                xlsx_RS, sheet_name='Surface GM Spectra', index_col=0),
+                                        fill_value=1)
+            df_ampl_GM = df_ampl_GM.mul(pd.read_excel(
+                xlsx_RS, sheet_name='Amplification Spectra', index_col=0),
+                                        fill_value=1)
+            df_ampl_xim_GM = df_ampl_xim_GM.mul(pd.read_excel(
+                xlsx_RS, sheet_name='Amplification x_IM,ref', index_col=0),
+                                        fill_value=1)
 
         # Compile Profile
         xlsx_PF = pd.ExcelFile('../' + profile + '/' + profile +
@@ -210,7 +231,6 @@ def main():
     sorted_zipped_lists = sorted(zipped)
     sorted_cols = [element for _, element in sorted_zipped_lists]
 
-    pd.options.mode.use_inf_as_na = True
     df_surf_comb = df_surf_comb.reindex(sorted_cols, axis=1)
     df_ampl_comb = df_ampl_comb.reindex(sorted_cols, axis=1)
     df_ampl_xim_comb = df_ampl_xim_comb.reindex(sorted_cols, axis=1)
@@ -219,12 +239,16 @@ def main():
     df_stress_comb = df_stress_comb.reindex(sorted_cols, axis=1)
 
     # RS Geomean for batch run
+    n_valid_profiles = df_surf_comb.count(axis=1)
     df_surf_comb['Sa (g)'] = df_surf_comb.prod(axis=1).pow(
-        1. / df_surf_comb.count(axis=1))
+        1. / n_valid_profiles)
     df_ampl_comb['Sa (g)'] = df_ampl_comb.prod(axis=1).pow(
-        1. / df_ampl_comb.count(axis=1))
+        1. / n_valid_profiles)
     df_ampl_xim_comb['Sa (g)'] = df_ampl_xim_comb.prod(axis=1).pow(
-        1. / df_ampl_xim_comb.count(axis=1))
+        1. / n_valid_profiles)
+    df_surf_GM = df_surf_GM.pow(1. / n_valid_profiles.mean())
+    df_ampl_GM = df_ampl_GM.pow(1. / n_valid_profiles.mean())
+    df_ampl_xim_GM = df_ampl_xim_GM.pow(1. / n_valid_profiles.mean())
 
     # Write RS_Merged
     writer_Merged_RS = pd.ExcelWriter('../RS_Merged.xlsx')
@@ -232,6 +256,13 @@ def main():
     df_ampl_comb.to_excel(writer_Merged_RS, 'Amplification Spectra')
     df_ampl_xim_comb.to_excel(writer_Merged_RS, 'Amplification x_IM,ref')
     writer_Merged_RS.save()
+
+    # Write GMs_Merged
+    writer_Merged_GMs = pd.ExcelWriter('../GMs_Merged.xlsx')
+    df_surf_GM.to_excel(writer_Merged_GMs, 'Surface GM Spectra')
+    df_ampl_GM.to_excel(writer_Merged_GMs, 'Amplification Spectra')
+    df_ampl_xim_GM.to_excel(writer_Merged_GMs, 'Amplification x_IM,ref')
+    writer_Merged_GMs.save()
 
     # Write Profile_Merged
     writer_Merged_Prof = pd.ExcelWriter('../Profile_Merged.xlsx')
