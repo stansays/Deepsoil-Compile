@@ -3,3 +3,6 @@
 
 # Notebooks
 *.ipynb
+
+# Node modules
+node_modules/
