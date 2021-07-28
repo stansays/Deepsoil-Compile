@@ -28,8 +28,8 @@ for i in range(0, len(text_files), 2):
     df = pd.DataFrame()
     x_record, x_time_step = parse_record_txt('../data/input/ATH/' + text_files[i])
     y_record, y_time_step = parse_record_txt('../data/input/ATH/' + text_files[i+1])
-    gmrotd100 = ims.gmrotdpp(x_record, x_time_step, y_record, y_time_step,
-                        periods, percentile=100.0, damping=0.05)
-    df['Period'] = gmrotd100['periods']
-    df['Sa'] = gmrotd100['GMRotDpp']
+    rotd100 = ims.rotdpp(x_record, x_time_step, y_record, y_time_step,
+                        periods, percentile=100.0, damping=0.05)[0]
+    df['Period'] = periods
+    df['Sa'] = rotd100['Pseudo-Acceleration']
     df.to_csv('../data/output/ATH/' + text_files[i][:2] + '.csv', index=False)
