@@ -202,17 +202,17 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
         # import corresponding time series from record set dir
         record_acc_H1, record_acc_H2, dt = _import_time_series(record_path)
 
-        # # calculate RotD100 output dict for record, but result is in cgs units
-        # RotD100_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
-        #                         periods, percentile=100.0,
-        #                         damping=damping_level, units='g')[0]
-        # FOR WORKFLOW TESTING ONLY
-        sax, say = ims.get_response_spectrum_pair(
-                        record_acc_H1, dt, record_acc_H2, dt,
-                        periods, damping=damping_level, units='g')
-
-        # calculate GeoMean spectra for record pair, but result is in cgs units
-        RotD100_cgs = ims.geometric_mean_spectrum(sax, say)
+        # calculate RotD100 output dict for record, but result is in cgs units
+        RotD100_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
+                                periods, percentile=100.0,
+                                damping=damping_level, units='g')[0]
+        # # FOR WORKFLOW TESTING ONLY
+        # sax, say = ims.get_response_spectrum_pair(
+        #                 record_acc_H1, dt, record_acc_H2, dt,
+        #                 periods, damping=damping_level, units='g')
+        #
+        # # calculate GeoMean spectra for record pair, but result is in cgs units
+        # RotD100_cgs = ims.geometric_mean_spectrum(sax, say)
 
         # convert to g units
         RotD100_SA_g = conv(RotD100_cgs["Pseudo-Acceleration"],
@@ -442,7 +442,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
 def main():
     ## REQUIRED INPUTS ##
-    input_dir = '../data/input_files/NP21.069'
+    input_dir = '../'
     damping_ratio = 0.05
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
