@@ -33,8 +33,8 @@ def _import_time_series(folder_acc_data):
     except OSError:
         print("Folder of acceleration time series records does not exist.")
 
-    H1_ALIASES = ['FN','Normal','H1','Hor1','SZ1']
-    H2_ALIASES = ['FP','Parallel','H2','Hor2','SZ2']
+    H1_ALIASES = ['FN', 'Normal', 'H1', 'Hor1', 'SZ1']
+    H2_ALIASES = ['FP', 'Parallel', 'H2', 'Hor2', 'SZ2']
 
     component_list = os.listdir(folder_acc_data)
 
@@ -55,11 +55,11 @@ def _import_time_series(folder_acc_data):
 
     # check for missing fields and raise error
 
-    H1_time = H1_record.iloc[:,0].to_numpy()
-    H2_time = H2_record.iloc[:,0].to_numpy()
+    H1_time = H1_record.iloc[:, 0].to_numpy()
+    H2_time = H2_record.iloc[:, 0].to_numpy()
 
-    H1_acc = H1_record.iloc[:,1].to_numpy()
-    H2_acc = H2_record.iloc[:,1].to_numpy()
+    H1_acc = H1_record.iloc[:, 1].to_numpy()
+    H2_acc = H2_record.iloc[:, 1].to_numpy()
 
     # Check record length
     if H1_time.shape[0] != H2_time.shape[0]:
@@ -99,17 +99,21 @@ def import_ASC_target_spectra(suite_dir):
 
     # inefficient search and case-sensitive;
     # improve with regex; check for multiple matches
-    targets = [comp for comp in component_list if 'Target' in comp]
+    targets = [comp for comp in component_list if 'target' in comp.lower()]
     if not targets:
         raise IndexError("Provide target spectra files!")
 
     # Search for ASC target
     # bug alert: code proceeds if only 1 target file but no ASC nor SZ specified
-    targ_file = [targ for targ in targets if 'ASC' in targ]
+    targ_file = [targ for targ in targets if 'ASC' in targ.upper()]
     if len(targ_file) > 1: # more than 1 match
         raise ValueError("Multiple ASC target spectra found. Please check!")
     elif not any(targ_file): # if empty
         ASC_target = {}
+        # check if SZ is instead specified
+        alt_check = [targ for targ in targets if 'SZ' in targ.upper()]
+        if not alt_check:
+            raise IndexError("Specify target spectra files as ASC or SZ!")
     else:
         [targ_file] =  targ_file # unpack only member
         df = pd.read_csv(os.path.join(suite_dir, targ_file), sep='\t')
@@ -117,8 +121,8 @@ def import_ASC_target_spectra(suite_dir):
         # check for missing fields and raise error
 
         ASC_target = {}
-        ASC_target['Periods'] = df.iloc[:,0].to_numpy()
-        ASC_target['SA'] = df.iloc[:,1].to_numpy()
+        ASC_target['Periods'] = df.iloc[:, 0].to_numpy()
+        ASC_target['SA'] = df.iloc[:, 1].to_numpy()
 
     return ASC_target
 
@@ -139,17 +143,21 @@ def import_SZ_target_spectra(suite_dir):
 
     # inefficient search and case-sensitive;
     # improve with regex; check for multiple matches
-    targets = [comp for comp in component_list if 'Target' in comp]
+    targets = [comp for comp in component_list if 'target' in comp.lower()]
     if not targets:
         raise IndexError("Provide target spectra files!")
 
     # Search for SZ target
     # bug alert: code proceeds if only 1 target file but no ASC nor SZ specified
-    targ_file = [targ for targ in targets if 'SZ' in targ]
+    targ_file = [targ for targ in targets if 'SZ' in targ.upper()]
     if len(targ_file) > 1: # more than 1 match
         raise ValueError("Multiple SZ target spectra found. Please check!")
     elif not any(targ_file): # if empty
         SZ_target = {}
+        # check if ASC is instead specified
+        alt_check = [targ for targ in targets if 'ASC' in targ.upper()]
+        if not alt_check:
+            raise IndexError("Specify target spectra files as ASC or SZ!")
     else:
         [targ_file] =  targ_file # unpack only member
         df = pd.read_csv(os.path.join(suite_dir, targ_file), sep='\t')
@@ -157,8 +165,8 @@ def import_SZ_target_spectra(suite_dir):
         # check for missing fields and raise error
 
         SZ_target = {}
-        SZ_target['Periods'] = df.iloc[:,0].to_numpy()
-        SZ_target['SA'] = df.iloc[:,1].to_numpy()
+        SZ_target['Periods'] = df.iloc[:, 0].to_numpy()
+        SZ_target['SA'] = df.iloc[:, 1].to_numpy()
 
     return SZ_target
 
@@ -172,14 +180,14 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
 
     # raise warning for duplicate prefixes?
     # raise warning if file prefix is not the same with dir prefix
-    for i in np.arange(len(dir_list)+1):
+    for i in np.arange(len(dir_list) + 1):
         suite_list.extend([dir for dir in dir_list \
                             if dir.startswith('{:0>2}'.format(i))])
     # this is a repetitive check; revise later
     # bug alert: code proceeds if across pairs are defined in input_files
     # for example: if FN and H2 are defined instead of FN,FP or H1,H2
     # might be fixed if checked as tuple pairs
-    ASC_ALIASES = ['FN','Normal','H1','Hor1','FP','Parallel','H2','Hor2']
+    ASC_ALIASES = ['FN', 'Normal', 'H1', 'Hor1', 'FP', 'Parallel', 'H2', 'Hor2']
     # calculate RotD100 spectra for each ASC record set in suite
     suite_rotd100 = {}
     suite_rotd100['Periods'] = periods
@@ -231,7 +239,7 @@ def compute_suite_geomean_spectra(suite_dir, periods, damping_level=0.05):
     dir_list = os.listdir(suite_dir)
 
     # raise warning for duplicate prefixes?
-    for i in np.arange(len(dir_list)+1):
+    for i in np.arange(len(dir_list) + 1):
         suite_list.extend([dir for dir in dir_list \
                             if dir.startswith('{:0>2}'.format(i))])
     # this is a repetitive check; revise later
@@ -320,7 +328,7 @@ def plot_ASC_matching_assessment(save_dir, ASC_target, ASC_suite,
         ax.set_xlabel("Period T (s)", fontsize=14)
         ax.set_ylabel("Spectral Acceleration $S_a$ (g)", fontsize=14)
         ax.set_title(   f"ASC Maximum-Direction Response Spectra "
-                        f"($\zeta$ = {damping_level*100}%)",
+                        f"($\zeta$ = {damping_level * 100}%)",
                         fontsize=18)
         ax.grid(which="both")
         ax.legend(loc=0, fontsize=10)
@@ -333,6 +341,7 @@ def plot_SZ_matching_assessment(save_dir, SZ_target, SZ_suite,
     Generates plot of matching assessment for SZ suite.
     """
     filename = os.path.join(save_dir, "SZ_geomean_spectrum.svg")
+    
     # skips plotting if SZ only contains Periods items; I don't like this
     if (len(SZ_suite) > 1) and SZ_target:
         fig, ax = plt.subplots(1, 1, figsize=(10, 7))
@@ -370,7 +379,7 @@ def plot_SZ_matching_assessment(save_dir, SZ_target, SZ_suite,
         ax.set_xlabel("Period T (s)", fontsize=14)
         ax.set_ylabel("Spectral Acceleration $S_a$ (g)", fontsize=14)
         ax.set_title(   f"SZ Geometric-Mean Response Spectra "
-                        f"($\zeta$ = {damping_level*100}%)",
+                        f"($\zeta$ = {damping_level * 100}%)",
                         fontsize=18)
         ax.grid(which="both")
         ax.legend(loc=0, fontsize=10)
@@ -381,10 +390,7 @@ def build_save_dir(save_dir):
     """
     Create new directory for placing output file directory.
     """
-    try:
-        os.mkdir(save_dir)
-    except OSError as err_msg:
-        raise err_msg
+    if not os.path.exists(save_dir): os.mkdir(save_dir)
 
 
 def set_cwd_to_src_loc():
@@ -406,7 +412,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
     # Write sheet if not empty
     if not df_ASC_target.empty:
-        df_ASC_target["110% SA"] = 1.1*df_ASC_target["SA"]
+        df_ASC_target["110% SA"] = 1.1 * df_ASC_target["SA"]
         df_ASC_target.to_excel(xlwriter, sheet_name="ASC Target", index=False)
 
     # Again, since I was forced to include Periods in dict
@@ -423,7 +429,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
     # Write sheet if not empty
     if not df_SZ_target.empty:
-        df_SZ_target["110% SA"] = 1.1*df_SZ_target["SA"]
+        df_SZ_target["110% SA"] = 1.1 * df_SZ_target["SA"]
         df_SZ_target.to_excel(xlwriter, sheet_name="SZ Target", index=False)
 
     # Again, since I was forced to include Periods in dict
