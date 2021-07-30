@@ -12,9 +12,11 @@ import os
 import warnings
 import numpy as np
 import pandas as pd
+import multiprocessing as mp
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from scipy.stats.mstats import gmean
+from itertools import repeat
 from re import search
 
 import response_spectrum as rsp
@@ -171,12 +173,53 @@ def import_SZ_target_spectra(suite_dir):
     return SZ_target
 
 
+def record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, suite_rotd100):
+    '''
+    function for parallel processing of records in suite list
+    '''
+    record_path = os.path.join(suite_dir, record)
+    # this can be removed once repetitive check is fixed
+    component_list = os.listdir(record_path)
+
+    matching_alias = [alias in comp for alias in ASC_ALIASES \
+                        for comp in component_list]
+
+    if not any(matching_alias):
+        # skip RotD100 computation if no ASC file names found in record dir
+        return
+
+    elif sum(matching_alias) == 1:
+        # Raise error message if only 1 matching name is found.
+        raise ValueError(   f"No matching record pair found in "
+                            f"{os.path.abspath(record)}.")
+    # import corresponding time series from record set dir
+    record_acc_H1, record_acc_H2, dt = _import_time_series(record_path)
+
+    # calculate RotD100 output dict for record, but result is in cgs units
+    RotD100_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
+                            periods, percentile=100.0,
+                            damping=damping_level, units='g')[0]
+    # # FOR WORKFLOW TESTING ONLY
+    # sax, say = ims.get_response_spectrum_pair(
+    #                 record_acc_H1, dt, record_acc_H2, dt,
+    #                 periods, damping=damping_level, units='g')
+    #
+    # # calculate GeoMean spectra for record pair, but result is in cgs units
+    # RotD100_cgs = ims.geometric_mean_spectrum(sax, say)
+
+    # convert to g units
+    RotD100_SA_g = conv(RotD100_cgs["Pseudo-Acceleration"],
+                        from_='cm/s/s', to_='g')
+    # append to suite dict
+    suite_rotd100[record] = RotD100_SA_g
+
 def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
     """
     Calculate RotD100 Response Spectra for each record in a given suite of
     acceleration time-histories from ASC regions.
     """
     dir_list = os.listdir(suite_dir)
+    manager = mp.Manager()
 
     # raise warning for duplicate prefixes?
     # raise warning if file prefix is not the same with dir prefix
@@ -189,46 +232,19 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
     # might be fixed if checked as tuple pairs
     ASC_ALIASES = ['FN', 'Normal', 'H1', 'Hor1', 'FP', 'Parallel', 'H2', 'Hor2']
     # calculate RotD100 spectra for each ASC record set in suite
-    suite_rotd100 = {}
+    suite_rotd100 = manager.dict()
     suite_rotd100['Periods'] = periods
-    for record in suite_list:
-        record_path = os.path.join(suite_dir, record)
-        # this can be removed once repetitive check is fixed
-        component_list = os.listdir(record_path)
+    inputs = list(
+        zip(suite_list, repeat(suite_dir), repeat(ASC_ALIASES),
+            repeat(periods), repeat(damping_level), repeat(suite_rotd100)))
+    with mp.Pool() as pool:
+        pool.starmap(record_rotd100, inputs)
 
-        matching_alias = [alias in comp for alias in ASC_ALIASES \
-                            for comp in component_list]
-
-        if not any(matching_alias):
-            # skip RotD100 computation if no ASC file names found in record dir
-            continue
-
-        elif sum(matching_alias) == 1:
-            # Raise error message if only 1 matching name is found.
-            raise ValueError(   f"No matching record pair found in "
-                                f"{os.path.abspath(record)}.")
-        # import corresponding time series from record set dir
-        record_acc_H1, record_acc_H2, dt = _import_time_series(record_path)
-
-        # calculate RotD100 output dict for record, but result is in cgs units
-        RotD100_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
-                                periods, percentile=100.0,
-                                damping=damping_level, units='g')[0]
-        # # FOR WORKFLOW TESTING ONLY
-        # sax, say = ims.get_response_spectrum_pair(
-        #                 record_acc_H1, dt, record_acc_H2, dt,
-        #                 periods, damping=damping_level, units='g')
-        #
-        # # calculate GeoMean spectra for record pair, but result is in cgs units
-        # RotD100_cgs = ims.geometric_mean_spectrum(sax, say)
-
-        # convert to g units
-        RotD100_SA_g = conv(RotD100_cgs["Pseudo-Acceleration"],
-                            from_='cm/s/s', to_='g')
-        # append to suite dict
-        suite_rotd100[record] = RotD100_SA_g
-
-    return suite_rotd100
+    suite_rotd100 = dict(sorted(suite_rotd100.items()))
+    suite_rotd100_sorted = {}
+    suite_rotd100_sorted['Periods'] = periods
+    suite_rotd100_sorted |= suite_rotd100
+    return suite_rotd100_sorted
 
 
 def compute_suite_geomean_spectra(suite_dir, periods, damping_level=0.05):
@@ -464,7 +480,7 @@ def main():
     ASC_target = import_ASC_target_spectra(input_dir)
     SZ_target = import_SZ_target_spectra(input_dir)
 
-    # Get RotD1000-Component Response Spectra for ASC Suite
+    # Get RotD100-Component Response Spectra for ASC Suite
     suite_rotd100_spectra = compute_suite_rotd100_spectra(input_dir, periods,
                                                     damping_level=damping_ratio)
 
@@ -483,4 +499,5 @@ def main():
                 suite_gm_spectra)
 
 if __name__ == '__main__':
+    mp.freeze_support()
     main()
