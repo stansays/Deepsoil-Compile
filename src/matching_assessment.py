@@ -243,7 +243,7 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
     suite_rotd100 = dict(sorted(suite_rotd100.items()))
     suite_rotd100_sorted = {}
     suite_rotd100_sorted['Periods'] = periods
-    suite_rotd100_sorted |= suite_rotd100
+    suite_rotd100_sorted = {**suite_rotd100_sorted, **suite_rotd100}
     return suite_rotd100_sorted
 
 
