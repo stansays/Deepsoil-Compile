@@ -1,8 +1,8 @@
-# Cache files
+# Node .js files
+node_modules/
+
+# Pycache files
 *.pyc
 
-# Notebooks
+# Notebook
 *.ipynb
-
-# Node modules
-node_modules/
