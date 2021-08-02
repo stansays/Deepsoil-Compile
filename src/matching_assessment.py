@@ -525,7 +525,7 @@ def main():
     end_time = time.time()
     # Log run statistics
     print(  f"Program ran successfully. "
-            f"Execution time is {end_time - start_time}")
+            f"Finished in {(end_time - start_time): .2f} seconds.")
 
     input("Press ENTER to exit...")
 
