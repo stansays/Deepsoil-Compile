@@ -422,10 +422,6 @@ def build_save_dir(save_dir):
     if not os.path.exists(save_dir): os.mkdir(save_dir)
 
 
-def set_cwd_to_src_loc():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-
 def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
     """
     Save the numerical output data in a single Excel file.
@@ -490,10 +486,7 @@ def main():
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
     ## ####### ####### ##
-
-    # Change current working directory ("cwd") to location of script or dist
-    # set_cwd_to_src_loc()
-    
+  
     # # -> for scripting use
     # output_dir = os.getcwd() + "./output_files"
     # # -> default location for dist
