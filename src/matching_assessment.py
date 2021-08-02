@@ -464,7 +464,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
 def main():
     ## REQUIRED INPUTS ##
-    input_dir = '../data/input_files/NP21.069'
+    input_dir = '../data/input_files'
     damping_ratio = 0.05
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
