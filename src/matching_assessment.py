@@ -473,7 +473,7 @@ def main():
     # Change current working directory ("cwd") to location of script or dist
     set_cwd_to_src_loc()
     # output_dir = os.path.join(wd, "data/output_files") -> for scripting use
-    output_dir = os.getcwd() + "/output_files" # -> default location for dist
+    output_dir = os.getcwd() + "../data/output_files" # -> default location for dist
     build_save_dir(output_dir)
 
     # Get target response spectra in suite directory
