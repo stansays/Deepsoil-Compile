@@ -7,7 +7,10 @@ import multiprocessing as mp
 
 
 def merge_profile(profile):
-    cwd = os.path.abspath('../' + profile)
+    '''
+    Collates ground motions and merges into one Excel file per profile
+    '''
+    cwd = os.path.abspath('../data/input/' + profile)
     folders = [f for f in os.listdir(cwd) if f.startswith('Motion_')]
 
     df_surface = pd.DataFrame()
@@ -19,7 +22,7 @@ def merge_profile(profile):
     for folder in folders:
         pos = folder.find('(') - 1
         motion = folder[7:pos]
-        conn = sqlite3.connect('../' + profile + '/' + folder +
+        conn = sqlite3.connect('../data/input/' + profile + '/' + folder +
                                '/deepsoilout.db3')
 
         # Input Motion
@@ -104,7 +107,8 @@ def merge_profile(profile):
     df_stress['Mean'] = df_stress.mean(axis=1)
 
     # Write RS to Excel
-    writer_SRA = pd.ExcelWriter('../' + profile + '/' + profile + '_RS.xlsx')
+    writer_SRA = pd.ExcelWriter('../data/output/' + profile + '/' + profile +
+                                '_RS.xlsx')
     df_input.to_excel(writer_SRA, 'Input Motion')
     df_input_mean.to_excel(writer_SRA, 'Input GM Spectra')
     df_surface.to_excel(writer_SRA, 'Surface Motion')
@@ -114,7 +118,7 @@ def merge_profile(profile):
     writer_SRA.save()
 
     # Write Profile to Excel
-    writer_Profile = pd.ExcelWriter('../' + profile + '/' + profile +
+    writer_Profile = pd.ExcelWriter('../data/output/' + profile + '/' + profile +
                                     '_Profile.xlsx')
     df_disp.to_excel(writer_Profile, 'Displacement')
     df_strain.to_excel(writer_Profile, 'Strain')
@@ -123,6 +127,9 @@ def merge_profile(profile):
 
 
 def df_next_comb(xlsx, df, sheet_name, mean_col):
+    '''
+    Appends spectral mean of profile to dataframe 
+    '''
     df_next = pd.read_excel(xlsx,
                             sheet_name=sheet_name).rename(columns={
                                 'Mean': mean_col,
@@ -132,9 +139,16 @@ def df_next_comb(xlsx, df, sheet_name, mean_col):
 
 
 def main():
-    cwd = os.path.abspath('..')
+    cwd = os.path.abspath('../data/input/')
     profiles = os.listdir(cwd)
     profiles = [f for f in profiles if f.startswith('profile_')]
+    
+    # output folder and subfolders created if does not exist
+    if not os.path.exists('../data/output/'): os.mkdir('../data/output/')
+    for profile in profiles:
+        if not os.path.exists('../data/output/' + profile):
+            os.mkdir('../data/output/' + profile)
+
     with mp.Pool() as pool:
         pool.map(merge_profile, profiles)
 
@@ -153,7 +167,8 @@ def main():
         mean_col = 'Mean ' + profile[8:]
 
         # Compile RS
-        xlsx_RS = pd.ExcelFile('../' + profile + '/' + profile + '_RS.xlsx')
+        xlsx_RS = pd.ExcelFile('../data/output/' + profile + '/' + profile +
+                               '_RS.xlsx')
         df_surf_comb = df_next_comb(xlsx_RS, df_surf_comb,
                                 'Surface GM Spectra', mean_col)
         df_ampl_comb = df_next_comb(xlsx_RS, df_ampl_comb,
@@ -161,6 +176,8 @@ def main():
         df_ampl_xim_comb = df_next_comb(xlsx_RS, df_ampl_xim_comb,
                                 'Amplification x_IM,ref', mean_col)
         if df_surf_GM.empty:
+            df_surf_mtn_GM = pd.read_excel(xlsx_RS,
+                            sheet_name='Surface Motion', index_col=0)
             df_surf_GM = pd.read_excel(xlsx_RS,
                             sheet_name='Surface GM Spectra', index_col=0)
             df_ampl_GM = pd.read_excel(xlsx_RS,
@@ -168,6 +185,9 @@ def main():
             df_ampl_xim_GM = pd.read_excel(xlsx_RS,
                             sheet_name='Amplification x_IM,ref', index_col=0)
         else:
+            df_surf_mtn_GM = df_surf_mtn_GM.mul(pd.read_excel(
+                xlsx_RS, sheet_name='Surface Motion', index_col=0),
+                                        fill_value=1)
             df_surf_GM = df_surf_GM.mul(pd.read_excel(
                 xlsx_RS, sheet_name='Surface GM Spectra', index_col=0),
                                         fill_value=1)
@@ -179,7 +199,7 @@ def main():
                                         fill_value=1)
 
         # Compile Profile
-        xlsx_PF = pd.ExcelFile('../' + profile + '/' + profile +
+        xlsx_PF = pd.ExcelFile('../data/output/' + profile + '/' + profile +
                                '_Profile.xlsx')
 
         # Compile Strain Tab
@@ -246,26 +266,28 @@ def main():
         1. / n_valid_profiles)
     df_ampl_xim_comb['Sa (g)'] = df_ampl_xim_comb.prod(axis=1).pow(
         1. / n_valid_profiles)
+    df_surf_mtn_GM = df_surf_mtn_GM.pow(1. / n_valid_profiles.mean())
     df_surf_GM = df_surf_GM.pow(1. / n_valid_profiles.mean())
     df_ampl_GM = df_ampl_GM.pow(1. / n_valid_profiles.mean())
     df_ampl_xim_GM = df_ampl_xim_GM.pow(1. / n_valid_profiles.mean())
 
     # Write RS_Merged
-    writer_Merged_RS = pd.ExcelWriter('../RS_Merged.xlsx')
+    writer_Merged_RS = pd.ExcelWriter('../data/output/RS_Merged.xlsx')
     df_surf_comb.to_excel(writer_Merged_RS, 'Surface GM Spectra')
     df_ampl_comb.to_excel(writer_Merged_RS, 'Amplification Spectra')
     df_ampl_xim_comb.to_excel(writer_Merged_RS, 'Amplification x_IM,ref')
     writer_Merged_RS.save()
 
     # Write GMs_Merged
-    writer_Merged_GMs = pd.ExcelWriter('../GMs_Merged.xlsx')
+    writer_Merged_GMs = pd.ExcelWriter('../data/output/GMs_Merged.xlsx')
+    df_surf_mtn_GM.to_excel(writer_Merged_GMs, 'Surface Motion')
     df_surf_GM.to_excel(writer_Merged_GMs, 'Surface GM Spectra')
     df_ampl_GM.to_excel(writer_Merged_GMs, 'Amplification Spectra')
     df_ampl_xim_GM.to_excel(writer_Merged_GMs, 'Amplification x_IM,ref')
     writer_Merged_GMs.save()
 
     # Write Profile_Merged
-    writer_Merged_Prof = pd.ExcelWriter('../Profile_Merged.xlsx')
+    writer_Merged_Prof = pd.ExcelWriter('../data/output/Profile_Merged.xlsx')
     df_disp_comb.to_excel(writer_Merged_Prof, 'Displacement')
     df_strain_comb.to_excel(writer_Merged_Prof, 'Strain')
     df_stress_comb.to_excel(writer_Merged_Prof, 'Stress Ratio')
