@@ -178,7 +178,8 @@ def import_SZ_target_spectra(suite_dir):
     return SZ_target
 
 
-def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, suite_rotd100):
+def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, 
+                    suite_rotd100):
     '''
     function for parallel processing of records in suite list
     '''
