@@ -114,7 +114,7 @@ def plot_fourier_spectrum(time_series, time_step, figure_size=(7, 5),
     _save_image(filename, filetype, dpi)
     plt.show()
 
-#@njit
+
 def get_response_spectrum(acceleration, time_step, periods, damping=0.05,
         units="cm/s/s", method="Nigam-Jennings"):
     '''
@@ -242,7 +242,7 @@ def rotate_horizontal(series_x, series_y, angle):
     rot_hist_y = (-np.sin(angle) * series_x) + (np.cos(angle) * series_y)
     return rot_hist_x, rot_hist_y
 
-#@jit(nopython=True)
+
 def equalise_series(series_x, series_y):
     """
     For two time series from the same record but of different length
@@ -409,7 +409,7 @@ def gmrotipp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
     gmroti["GMRotD{:.2f}".format(percentile)] = gmrot["GMRotDpp"]
     return gmroti
 
-#@jit(nopython=True)
+
 def rotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
         percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
     """
@@ -588,7 +588,7 @@ def get_arms(acceleration, time_step):
     dur = time_step * float(len(acceleration) - 1)
     return np.sqrt((1. / dur) * np.trapz(acceleration  ** 2., dx=time_step))
 
-#@jit(nopython=True)
+
 def get_response_spectrum_intensity(spec):
     """
     Returns the response spectrum intensity (Housner intensity), defined
