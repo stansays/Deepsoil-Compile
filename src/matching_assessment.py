@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # AMH Philippines Inc.
-# FJTBernales (2021.07.30)
+# FJTBernales, SBRSayson (2021.07.30)
 
 '''
 Combines scaled or spectrally-matched horizontal-component time histories and
@@ -10,6 +10,7 @@ compares with a target spectra.
 
 import os
 import warnings
+import time
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
@@ -126,6 +127,8 @@ def import_ASC_target_spectra(suite_dir):
         ASC_target['Periods'] = df.iloc[:, 0].to_numpy()
         ASC_target['SA'] = df.iloc[:, 1].to_numpy()
 
+    print("Import ASC target spectra successful!")
+
     return ASC_target
 
 
@@ -170,10 +173,12 @@ def import_SZ_target_spectra(suite_dir):
         SZ_target['Periods'] = df.iloc[:, 0].to_numpy()
         SZ_target['SA'] = df.iloc[:, 1].to_numpy()
 
+    print("Import SZ target spectra successful!")
+
     return SZ_target
 
 
-def record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, suite_rotd100):
+def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, suite_rotd100):
     '''
     function for parallel processing of records in suite list
     '''
@@ -218,6 +223,8 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
     Calculate RotD100 Response Spectra for each record in a given suite of
     acceleration time-histories from ASC regions.
     """
+    print("Calculating RotD100-component spectra...")
+
     dir_list = os.listdir(suite_dir)
     manager = mp.Manager()
 
@@ -238,7 +245,7 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
         zip(suite_list, repeat(suite_dir), repeat(ASC_ALIASES),
             repeat(periods), repeat(damping_level), repeat(suite_rotd100)))
     with mp.Pool() as pool:
-        pool.starmap(record_rotd100, inputs)
+        pool.starmap(_record_rotd100, inputs)
 
     suite_rotd100 = dict(sorted(suite_rotd100.items()))
     suite_rotd100_sorted = {}
@@ -252,6 +259,8 @@ def compute_suite_geomean_spectra(suite_dir, periods, damping_level=0.05):
     Calculate Geometric-Mean Acceleration Response Spectra for each record in a
     given suite of acceleration time-histories from SZ (far-field) regions.
     """
+    print("Calculating GeoMean-component spectra...")
+
     dir_list = os.listdir(suite_dir)
 
     # raise warning for duplicate prefixes?
@@ -313,6 +322,8 @@ def plot_ASC_matching_assessment(save_dir, ASC_target, ASC_suite,
     """
     Generates plot of matching assessment for ASC suite.
     """
+    print("Generating ASC matching assessment plot...")
+
     filename = os.path.join(save_dir, "ASC_rotd100_spectrum.svg")
 
     if (len(ASC_suite) > 1) and ASC_target:
@@ -356,6 +367,8 @@ def plot_SZ_matching_assessment(save_dir, SZ_target, SZ_suite,
     """
     Generates plot of matching assessment for SZ suite.
     """
+    print("Generating SZ matching assessment plot...")
+
     filename = os.path.join(save_dir, "SZ_geomean_spectrum.svg")
 
     # skips plotting if SZ only contains Periods items; I don't like this
@@ -415,8 +428,10 @@ def set_cwd_to_src_loc():
 
 def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
     """
-    Output the numerical output data in a single Excel file.
+    Save the numerical output data in a single Excel file.
     """
+    print(f"Writing output to {os.path.abspath(save_dir)}...")
+
     # Change directory to output path
     filename = os.path.join(save_dir, "output_matching_assessment.xlsx")
 
@@ -463,17 +478,26 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
     xlwriter.close()
 
 def main():
+    start_time = time.time()
+
     ## REQUIRED INPUTS ##
-    input_dir = '../data/input_files'
+    # # -> for scripting use
+    # input_dir = '../data/input_files/NP21.069' 
+    # # -> default location for dist
+    input_dir = os.path.join(os.getcwd(), "data", "input_files") 
+
     damping_ratio = 0.05
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
     ## ####### ####### ##
 
     # Change current working directory ("cwd") to location of script or dist
-    set_cwd_to_src_loc()
-    # output_dir = os.path.join(wd, "data/output_files") -> for scripting use
-    output_dir = os.getcwd() + "../data/output_files" # -> default location for dist
+    # set_cwd_to_src_loc()
+    
+    # # -> for scripting use
+    # output_dir = os.getcwd() + "./output_files"
+    # # -> default location for dist
+    output_dir = os.path.join(os.getcwd(), "data", "output_files") 
     build_save_dir(output_dir)
 
     # Get target response spectra in suite directory
@@ -497,6 +521,14 @@ def main():
     # Write the data to spreadsheet
     save_data(output_dir, ASC_target, suite_rotd100_spectra, SZ_target,
                 suite_gm_spectra)
+
+    end_time = time.time()
+    # Log run statistics
+    print(  f"Program ran successfully. "
+            f"Execution time is {end_time - start_time}")
+
+    input("Press ENTER to exit...")
+
 
 if __name__ == '__main__':
     mp.freeze_support()
