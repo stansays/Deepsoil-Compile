@@ -1,6 +1,9 @@
 # Node .js files
 node_modules/
 
+# Build files for bundled exe
+build/
+
 # Pycache files
 *.pyc
 
