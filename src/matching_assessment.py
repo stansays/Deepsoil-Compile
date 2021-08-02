@@ -357,7 +357,7 @@ def plot_SZ_matching_assessment(save_dir, SZ_target, SZ_suite,
     Generates plot of matching assessment for SZ suite.
     """
     filename = os.path.join(save_dir, "SZ_geomean_spectrum.svg")
-    
+
     # skips plotting if SZ only contains Periods items; I don't like this
     if (len(SZ_suite) > 1) and SZ_target:
         fig, ax = plt.subplots(1, 1, figsize=(10, 7))
@@ -464,7 +464,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
 def main():
     ## REQUIRED INPUTS ##
-    input_dir = '../'
+    input_dir = '../data/input_files/NP21.069'
     damping_ratio = 0.05
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
