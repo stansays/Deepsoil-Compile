@@ -24,7 +24,6 @@ Tools for supplementing Ground Motion Intensity Measures (IMs) from a set of
 acceleration time series
 '''
 
-from numba import jit, njit
 import numpy as np
 from math import pi
 from scipy.integrate import cumtrapz
