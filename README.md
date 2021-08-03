@@ -3,6 +3,18 @@ This contains Python scripts for compiling and consolidating (for randomized pro
 
 A one-file bundled executable is included in the dist folder for Windows users.
 
+>      |-- dist/
+>         |-- Deepsoil_Compile.exe
+>      |-- data/
+>         |-- input_files/
+>             |-- profile_1
+>                |-- Motion_01 [component] ([damping]%)
+>                |-- Motion_01 [component] ([damping]%)
+>                ...
+>             |-- profile_2
+>             ...
+>         |-- output_files/ --> (program output)
+
 
 # Matching-Assessment
 This contains Python scripts for calculating the SA_RotD100 and SA_GeoMean spectra for a suite comprising of ASC (near-field) and/or SZ (far-field) ground motion time-histories, in accordance with ASCE 7-16 Sec. 16.2.3.
@@ -19,7 +31,7 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 >             |-- 02 Record_2
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
->         |-- output_files/ -->(program output)
+>         |-- output_files/ --> (program output)
 >      |-- Matching-Assessment.exe
     
 6. Output files (response spectra plots and results spreadsheet) are all placed in the `output_files` folder.
