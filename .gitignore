@@ -1,0 +1,12 @@
+# Node .js files
+node_modules/
+
+# Build files for bundled exe
+build/
+*.spec
+
+# Pycache files
+*.pyc
+
+# Notebook
+*.ipynb
