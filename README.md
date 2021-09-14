@@ -23,7 +23,6 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 1. Damping ratio is 5% (UI will be provided soon).
 2. ASC records should have components with (H1, H2) or (FN, FP) in their respective filenames.
 3. SZ records should have components with (SZ1, SZ2) in their respective filenames.
-4. An executable is provided in the `dist` folder. Before execution, it shall be placed in a folder (any name); this shall be in the same location as the **ACC TH records** & **target spectra** txt files.
     
 >      |-- data/
 >         |-- input_files/
@@ -34,4 +33,4 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 >         |-- output_files/ --> (program output)
 >      |-- Matching-Assessment.exe
     
-6. Output files (response spectra plots and results spreadsheet) are all placed in the `output_files` folder.
+4. Output files (response spectra plots and results spreadsheet) are all placed in the `output_files` folder.
