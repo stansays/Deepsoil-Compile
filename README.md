@@ -28,9 +28,12 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 >         |-- input_files/
 >             |-- 01 [Record_1]
 >                |-- 01 [component].txt
->                |-- 02 [component].txt
+>                |-- 01 [component].txt
 >                ...
 >             |-- 02 [Record_2]
+>                |-- 02 [component].txt
+>                |-- 02 [component].txt
+>                ...
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
 >         |-- output_files/ --> (program output)
