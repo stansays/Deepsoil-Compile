@@ -9,9 +9,12 @@ A one-file bundled executable is included in the dist folder for Windows users.
 >         |-- input_files/
 >             |-- profile_1
 >                |-- Motion_01 [component] ([damping]%)
+>                   |-- deepsoilout.db3
 >                |-- Motion_01 [component] ([damping]%)
 >                ...
 >             |-- profile_2
+>                |-- Motion_02 [component] ([damping]%)
+>                |-- Motion_02 [component] ([damping]%)
 >             ...
 >         |-- output_files/ --> (program output)
 
@@ -26,8 +29,14 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
     
 >      |-- data/
 >         |-- input_files/
->             |-- 01 Record_1
->             |-- 02 Record_2
+>             |-- 01 [Record_1]
+>                |-- 01 [component].txt
+>                |-- 01 [component].txt
+>                ...
+>             |-- 02 [Record_2]
+>                |-- 02 [component].txt
+>                |-- 02 [component].txt
+>                ...
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
 >         |-- output_files/ --> (program output)
