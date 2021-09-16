@@ -14,7 +14,7 @@ Organization of files upon running (sample provided in `sample` folder):
 >                |-- Motion_02 [component] ([damping]%)
 >                |-- Motion_02 [component] ([damping]%)
 >             ...
->         |-- output_files/ --> (program output)
+>         |-- output_files/ --> (program output, folder created if not found)
 
 
 # Matching-Assessment
@@ -36,4 +36,4 @@ Organization of files upon running (sample provided in `sample` folder):
 >             |-- 02 [Record_2]
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
->         |-- output_files/ --> (program output)
+>         |-- output_files/ --> (program output, folder created if not found)
