@@ -1,8 +1,7 @@
 # Deepsoil-Compile
 This contains Python scripts for compiling and consolidating (for randomized profiles) the batch_output structure of DEEPSOIL.
 
-A one-file bundled executable is included in the dist folder for Windows users.
-
+Organization of files upon running (sample provided in `sample` folder):
 >      |-- Deepsoil_Compile.exe
 >      |-- data/
 >         |-- input_files/
@@ -26,6 +25,7 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 2. ASC records should have components with (H1, H2) or (FN, FP) in their respective filenames.
 3. SZ records should have components with (SZ1, SZ2) in their respective filenames.
 
+Organization of files upon running (sample provided in `sample` folder):
 >      |-- Matching-Assessment.exe    
 >      |-- data/
 >         |-- input_files/
@@ -34,11 +34,6 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 >                |-- 01 [component].txt
 >                ...
 >             |-- 02 [Record_2]
->                |-- 02 [component].txt
->                |-- 02 [component].txt
->                ...
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
 >         |-- output_files/ --> (program output)
-    
-4. Output files (response spectra plots and results spreadsheet) are all placed in the `output_files` folder.
