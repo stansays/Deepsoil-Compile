@@ -3,8 +3,7 @@ This contains Python scripts for compiling and consolidating (for randomized pro
 
 A one-file bundled executable is included in the dist folder for Windows users.
 
->      |-- dist/
->         |-- Deepsoil_Compile.exe
+>      |-- Deepsoil_Compile.exe
 >      |-- data/
 >         |-- input_files/
 >             |-- profile_1
@@ -26,7 +25,8 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 1. Damping ratio is 5% (UI will be provided soon).
 2. ASC records should have components with (H1, H2) or (FN, FP) in their respective filenames.
 3. SZ records should have components with (SZ1, SZ2) in their respective filenames.
-    
+
+>      |-- Matching-Assessment.exe    
 >      |-- data/
 >         |-- input_files/
 >             |-- 01 [Record_1]
@@ -40,6 +40,5 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 >             ...
 >             |-- [(ASC)...(Target)...]*.txt* and/or [(SZ)...(Target)...]*.txt*
 >         |-- output_files/ --> (program output)
->      |-- Matching-Assessment.exe
     
 4. Output files (response spectra plots and results spreadsheet) are all placed in the `output_files` folder.
