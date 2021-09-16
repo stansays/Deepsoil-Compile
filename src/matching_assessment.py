@@ -53,8 +53,8 @@ def _import_time_series(folder_acc_data):
             if alias in comp:
                 H2_file = comp
 
-    H1_record = pd.read_csv(os.path.join(folder_acc_data, H1_file), sep='\t')
-    H2_record = pd.read_csv(os.path.join(folder_acc_data, H2_file), sep='\t')
+    H1_record = pd.read_csv(os.path.join(folder_acc_data, H1_file), delim_whitespace=True)
+    H2_record = pd.read_csv(os.path.join(folder_acc_data, H2_file), delim_whitespace=True)
 
     # check for missing fields and raise error
 
@@ -119,7 +119,7 @@ def import_ASC_target_spectra(suite_dir):
             raise IndexError("Specify target spectra files as ASC or SZ!")
     else:
         [targ_file] =  targ_file # unpack only member
-        df = pd.read_csv(os.path.join(suite_dir, targ_file), sep='\t')
+        df = pd.read_csv(os.path.join(suite_dir, targ_file), delim_whitespace=True)
 
         # check for missing fields and raise error
 
@@ -127,7 +127,7 @@ def import_ASC_target_spectra(suite_dir):
         ASC_target['Periods'] = df.iloc[:, 0].to_numpy()
         ASC_target['SA'] = df.iloc[:, 1].to_numpy()
 
-    print("Import ASC target spectra successful!")
+        print("Import ASC target spectra successful!")
 
     return ASC_target
 
@@ -165,7 +165,7 @@ def import_SZ_target_spectra(suite_dir):
             raise IndexError("Specify target spectra files as ASC or SZ!")
     else:
         [targ_file] =  targ_file # unpack only member
-        df = pd.read_csv(os.path.join(suite_dir, targ_file), sep='\t')
+        df = pd.read_csv(os.path.join(suite_dir, targ_file), delim_whitespace=True)
 
         # check for missing fields and raise error
 
@@ -173,7 +173,7 @@ def import_SZ_target_spectra(suite_dir):
         SZ_target['Periods'] = df.iloc[:, 0].to_numpy()
         SZ_target['SA'] = df.iloc[:, 1].to_numpy()
 
-    print("Import SZ target spectra successful!")
+        print("Import SZ target spectra successful!")
 
     return SZ_target
 
@@ -330,9 +330,9 @@ def plot_ASC_matching_assessment(save_dir, ASC_target, ASC_suite,
     if (len(ASC_suite) > 1) and ASC_target:
         fig, ax = plt.subplots(1, 1, figsize=(10, 7))
         ax.loglog(  ASC_target['Periods'],
-                    ASC_target['SA'],
+                    ASC_target['SA'] * 1.10,
                     'r-',
-                    linewidth=3, label="ASC Target Spectra"
+                    linewidth=3, label="110% ASC Target Spectra"
                     )
         suite_periods = ASC_suite['Periods']
         # Calculate ASC suite average
