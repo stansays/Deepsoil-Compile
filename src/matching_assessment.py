@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # AMH Philippines Inc.
-# FJTBernales, SBRSayson (2021.07.30)
+# FJTBernales, SBRSayson (2021.09.17)
 
 '''
 Combines scaled or spectrally-matched horizontal-component time histories and
@@ -100,14 +100,11 @@ def import_ASC_target_spectra(suite_dir):
 
     component_list = os.listdir(suite_dir)
 
-    # inefficient search and case-sensitive;
-    # improve with regex; check for multiple matches
     targets = [comp for comp in component_list if 'target' in comp.lower()]
     if not targets:
         raise IndexError("Provide target spectra files!")
 
     # Search for ASC target
-    # bug alert: code proceeds if only 1 target file but no ASC nor SZ specified
     targ_file = [targ for targ in targets if 'ASC' in targ.upper()]
     if len(targ_file) > 1: # more than 1 match
         raise ValueError("Multiple ASC target spectra found. Please check!")
@@ -146,14 +143,11 @@ def import_SZ_target_spectra(suite_dir):
 
     component_list = os.listdir(suite_dir)
 
-    # inefficient search and case-sensitive;
-    # improve with regex; check for multiple matches
     targets = [comp for comp in component_list if 'target' in comp.lower()]
     if not targets:
         raise IndexError("Provide target spectra files!")
 
     # Search for SZ target
-    # bug alert: code proceeds if only 1 target file but no ASC nor SZ specified
     targ_file = [targ for targ in targets if 'SZ' in targ.upper()]
     if len(targ_file) > 1: # more than 1 match
         raise ValueError("Multiple SZ target spectra found. Please check!")
@@ -177,6 +171,30 @@ def import_SZ_target_spectra(suite_dir):
 
     return SZ_target
 
+def detect_damping_ratio(suite_dir):
+    '''
+    Extracts information on Damping from target spectra files
+    '''
+    try:
+        os.path.isdir(suite_dir)
+    except OSError:
+        raise OSError('Folder of target spectra does not exist.')
+
+    component_list = os.listdir(suite_dir)
+
+    targets = [comp for comp in component_list if 'target' in comp.lower()]
+    if not targets:
+        raise IndexError('Provide target spectra files!')
+
+    damping = []
+    for target in targets:
+        damping.append(
+            float(target[target.find('(') + 1:target.find('%')]) / 100)
+    if len(set(damping)) != 1:
+        raise ValueError('Damping ratios in target files are inconsistent!')
+    else:
+        print(f"Damping = {damping[0] * 100:.1f}%")
+        return damping[0]
 
 def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, 
                     suite_rotd100):
@@ -483,7 +501,7 @@ def main():
     # # -> default location for dist
     input_dir = os.path.join(os.getcwd(), "data", "input_files") 
 
-    damping_ratio = 0.05
+    damping_ratio = detect_damping_ratio(input_dir)
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
     ## ####### ####### ##
