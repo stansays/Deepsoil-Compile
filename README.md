@@ -34,5 +34,5 @@ Organization of files upon running (sample provided in `sample` folder):
 >                ...
 >             |-- 02 [Record_2]
 >             ...
->             |-- {txt file with name containing "ASC" or "SZ", "RotD{percentile} Target", and damping % in parenthesis}
+>             |-- {txt file with name containing "ASC" and/or "SZ", "RotD{percentile} Target", and damping % in parenthesis}
 >         |-- output_files/ --> (program output, folder created if not found)
