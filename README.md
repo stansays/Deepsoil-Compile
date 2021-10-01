@@ -18,7 +18,7 @@ Organization of files upon running (sample provided in `sample` folder):
 
 
 # Matching-Assessment
-This contains Python scripts for calculating the SA_RotD100 and SA_GeoMean spectra for a suite comprising of ASC (near-field) and/or SZ (far-field) ground motion time-histories, in accordance with ASCE 7-16 Sec. 16.2.3.
+This contains Python scripts for calculating the SA_RotDnn for a suite comprising of ASC (near-field) and/or SZ (far-field) ground motion time-histories, in accordance with ASCE 7-16 Sec. 16.2.3.
 
 Bug fixes, addition of UI, and other improvements are ongoing but this shall work given the following:
 1. ASC records should have components with (H1, H2) or (FN, FP) in their respective filenames.
@@ -34,5 +34,5 @@ Organization of files upon running (sample provided in `sample` folder):
 >                ...
 >             |-- 02 [Record_2]
 >             ...
->             |-- {txt file with name containing "ASC" or "SZ", "Target", and damping % in parenthesis}
+>             |-- {txt file with name containing "ASC" or "SZ", "RotD{percentile} Target", and damping % in parenthesis}
 >         |-- output_files/ --> (program output, folder created if not found)

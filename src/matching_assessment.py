@@ -73,11 +73,11 @@ def _import_time_series(folder_acc_data):
     time_step = np.diff(H1_time)[0]
     if not np.all(np.fabs(np.diff(H1_time) - time_step) < 1E-10):
         raise ValueError(f"Time step in {os.path.abspath(H1_file)} \
-                            is not consistent!")
+                            is not consistent!"                                                                                              )
 
     if not np.all(np.fabs(np.diff(H2_time) - time_step) < 1E-10):
         raise ValueError(f"Time step in {os.path.abspath(H2_file)} \
-                            is not consistent!")
+                            is not consistent!"                                                                                              )
 
     if np.diff(H1_time)[0] != np.diff(H2_time)[0]:
         raise ValueError(   f"Record pair {os.path.abspath(folder_acc_data)} "
@@ -193,11 +193,36 @@ def detect_damping_ratio(suite_dir):
     if len(set(damping)) != 1:
         raise ValueError('Damping ratios in target files are inconsistent!')
     else:
-        print(f"Damping = {damping[0] * 100:.1f}%")
+        print(f"Damping = {damping[0] * 100:.2f}%")
         return damping[0]
 
-def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level, 
-                    suite_rotd100):
+def detect_percentile(suite_dir):
+    '''
+    Extracts information on percentile from target spectra files
+    '''
+    try:
+        os.path.isdir(suite_dir)
+    except OSError:
+        raise OSError('Folder of target spectra does not exist.')
+
+    component_list = os.listdir(suite_dir)
+
+    targets = [comp for comp in component_list if 'target' in comp.lower()]
+    if not targets:
+        raise IndexError('Provide target spectra files!')
+    
+    percentile = []
+    for target in targets:
+        percentile.append(float(target[target.lower().find('rotd') + 4:
+                        target.lower().find('target')]))
+    if len(set(percentile)) != 1:
+        raise ValueError('Percentile in target files are inconsistent!')
+    else:
+        print(f"Percentile = {percentile[0]:.0f}%")
+        return percentile[0]
+
+def _record_rotdnn(record, suite_dir, ALIASES, periods, damping_level,
+                    percentile, suite_rotdnn):
     '''
     function for parallel processing of records in suite list
     '''
@@ -205,11 +230,11 @@ def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level,
     # this can be removed once repetitive check is fixed
     component_list = os.listdir(record_path)
 
-    matching_alias = [alias in comp for alias in ASC_ALIASES \
+    matching_alias = [alias in comp for alias in ALIASES \
                         for comp in component_list]
 
     if not any(matching_alias):
-        # skip RotD100 computation if no ASC file names found in record dir
+        # skip RotDnn computation if no ASC/SZ file names found in record dir
         return
 
     elif sum(matching_alias) == 1:
@@ -219,9 +244,9 @@ def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level,
     # import corresponding time series from record set dir
     record_acc_H1, record_acc_H2, dt = _import_time_series(record_path)
 
-    # calculate RotD100 output dict for record, but result is in cgs units
-    RotD100_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
-                            periods, percentile=100.0,
+    # calculate RotDnn output dict for record, but result is in cgs units
+    RotDnn_cgs = ims.rotdpp(record_acc_H1, dt, record_acc_H2, dt,
+                            periods, percentile=percentile,
                             damping=damping_level, units='g')[0]
     # # FOR WORKFLOW TESTING ONLY
     # sax, say = ims.get_response_spectrum_pair(
@@ -229,20 +254,21 @@ def _record_rotd100(record, suite_dir, ASC_ALIASES, periods, damping_level,
     #                 periods, damping=damping_level, units='g')
     #
     # # calculate GeoMean spectra for record pair, but result is in cgs units
-    # RotD100_cgs = ims.geometric_mean_spectrum(sax, say)
+    # RotDnn_cgs = ims.geometric_mean_spectrum(sax, say)
 
     # convert to g units
-    RotD100_SA_g = conv(RotD100_cgs["Pseudo-Acceleration"],
+    RotDnn_SA_g = conv(RotDnn_cgs["Pseudo-Acceleration"],
                         from_='cm/s/s', to_='g')
     # append to suite dict
-    suite_rotd100[record] = RotD100_SA_g
+    suite_rotdnn[record] = RotDnn_SA_g
 
-def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
+def compute_suite_rotdnn_spectra(suite_dir, periods, trt,
+                                percentile, damping_level=0.05):
     """
-    Calculate RotD100 Response Spectra for each record in a given suite of
-    acceleration time-histories from ASC regions.
+    Calculate RotDnn Response Spectra for each record in a given suite of
+    acceleration time-histories from ASC/SZ regions.
     """
-    print("Calculating RotD100-component spectra...")
+    print("Calculting " + trt + f" RotD{percentile:.0f}-component spectra...")
 
     dir_list = os.listdir(suite_dir)
     manager = mp.Manager()
@@ -256,21 +282,25 @@ def compute_suite_rotd100_spectra(suite_dir, periods, damping_level=0.05):
     # bug alert: code proceeds if across pairs are defined in input_files
     # for example: if FN and H2 are defined instead of FN,FP or H1,H2
     # might be fixed if checked as tuple pairs
-    ASC_ALIASES = ['FN', 'Normal', 'H1', 'Hor1', 'FP', 'Parallel', 'H2', 'Hor2']
-    # calculate RotD100 spectra for each ASC record set in suite
-    suite_rotd100 = manager.dict()
-    suite_rotd100['Periods'] = periods
+    if trt == 'ASC':
+        ALIASES = ['FN', 'Normal', 'H1', 'Hor1', 'FP', 'Parallel', 'H2', 'Hor2']
+    else:
+        ALIASES = ['SZ1', 'SZ2']
+    # calculate RotDnn spectra for each ASC/SZ record set in suite
+    suite_rotdnn = manager.dict()
+    suite_rotdnn['Periods'] = periods
     inputs = list(
-        zip(suite_list, repeat(suite_dir), repeat(ASC_ALIASES),
-            repeat(periods), repeat(damping_level), repeat(suite_rotd100)))
+        zip(suite_list, repeat(suite_dir), repeat(ALIASES),
+            repeat(periods), repeat(damping_level), repeat(percentile),
+            repeat(suite_rotdnn)))
     with mp.Pool() as pool:
-        pool.starmap(_record_rotd100, inputs)
+        pool.starmap(_record_rotdnn, inputs)
 
-    suite_rotd100 = dict(sorted(suite_rotd100.items()))
-    suite_rotd100_sorted = {}
-    suite_rotd100_sorted['Periods'] = periods
-    suite_rotd100_sorted = {**suite_rotd100_sorted, **suite_rotd100}
-    return suite_rotd100_sorted
+    suite_rotdnn = dict(sorted(suite_rotdnn.items()))
+    suite_rotdnn_sorted = {}
+    suite_rotdnn_sorted['Periods'] = periods
+    suite_rotdnn_sorted = {**suite_rotdnn_sorted, **suite_rotdnn}
+    return suite_rotdnn_sorted
 
 
 def compute_suite_geomean_spectra(suite_dir, periods, damping_level=0.05):
@@ -329,40 +359,44 @@ def compute_suite_geomean_spectra(suite_dir, periods, damping_level=0.05):
 
 
 # def get_NSCP2015_spectrum():
-    # Future implementation
+# Future implementation
 
 
 # def get_ASCE7-16_spectrum():
-    # Future implementation
+# Future implementation
 
 
-def plot_ASC_matching_assessment(save_dir, ASC_target, ASC_suite,
-                                damping_level=0.05):
+def plot_matching_assessment(save_dir, trt, target, suite,
+                                percentile, damping_level=0.05):
     """
-    Generates plot of matching assessment for ASC suite.
+    Generates plot of matching assessment for ASC/SZ suite.
     """
-    print("Generating ASC matching assessment plot...")
+    print("Generating " + trt + " matching assessment plot...")
 
-    filename = os.path.join(save_dir, "ASC_rotd100_spectrum.svg")
+    filename = os.path.join(save_dir, trt + f"_rotd{percentile:.0f}_spectrum.svg")
 
-    if (len(ASC_suite) > 1) and ASC_target:
+    if (len(suite) > 1) and target:
         fig, ax = plt.subplots(1, 1, figsize=(10, 7))
-        ax.loglog(  ASC_target['Periods'],
-                    ASC_target['SA'] * 1.10,
+        label = trt + " Target Spectra"
+        # if percentile == 100.0:
+        target['110% SA'] = target['SA'] * 1.10
+        label = "110% " + label
+        ax.loglog(  target['Periods'],
+                    target['110% SA'],
                     'r-',
-                    linewidth=3, label="110% ASC Target Spectra"
+                    linewidth=3, label=label
                     )
-        suite_periods = ASC_suite['Periods']
-        # Calculate ASC suite average
-        ASC_Average = gmean(list(ASC_suite[k] for k in ASC_suite.keys() \
+        suite_periods = suite['Periods']
+        # Calculate suite average
+        Average = gmean(list(suite[k] for k in suite.keys() \
                             if k != 'Periods'))
-        ax.loglog(  suite_periods, ASC_Average, 'k-', linewidth=3,
-                    label="ASC Suite Average"
+        ax.loglog(  suite_periods, Average, 'k-', linewidth=3,
+                    label=trt + " Suite Average"
                     )
 
-        for record in ASC_suite.keys():
+        for record in suite.keys():
             if record != 'Periods':
-                ax.loglog(suite_periods, ASC_suite[record], '--', linewidth=1,
+                ax.loglog(suite_periods, suite[record], '--', linewidth=1,
                             label=record)
 
         # get maximum value in period list
@@ -373,15 +407,14 @@ def plot_ASC_matching_assessment(save_dir, ASC_target, ASC_suite,
 
         ax.set_xlabel("Period T (s)", fontsize=14)
         ax.set_ylabel("Spectral Acceleration $S_a$ (g)", fontsize=14)
-        ax.set_title(   f"ASC Maximum-Direction Response Spectra "
-                        f"($\zeta$ = {damping_level * 100}%)",
+        ax.set_title(   trt + f" RotD{percentile:.0f} Response Spectra "
+                        f"($\zeta$ = {round(damping_level * 100, 2)}%)",
                         fontsize=18)
         ax.grid(which="both")
         ax.legend(loc=0, fontsize=10)
         fig.savefig(filename, format="svg")
 
-
-def plot_SZ_matching_assessment(save_dir, SZ_target, SZ_suite,
+def plot_SZ_geomean(save_dir, SZ_target, SZ_suite,
                                 damping_level=0.05):
     """
     Generates plot of matching assessment for SZ suite.
@@ -441,7 +474,8 @@ def build_save_dir(save_dir):
     if not os.path.exists(save_dir): os.mkdir(save_dir)
 
 
-def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
+def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite,
+              percentile):
     """
     Save the numerical output data in a single Excel file.
     """
@@ -458,7 +492,6 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
 
     # Write sheet if not empty
     if not df_ASC_target.empty:
-        df_ASC_target["110% SA"] = 1.1 * df_ASC_target["SA"]
         df_ASC_target.to_excel(xlwriter, sheet_name="ASC Target", index=False)
 
     # Again, since I was forced to include Periods in dict
@@ -470,12 +503,11 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
         # # Calculate ratios to guide re-matching; still useful?
         # ASC_ratios = np.divide(ASC_target['SA'], ASC_Average)
 
-        df_ASC_suite.to_excel(xlwriter, sheet_name="ASC RotD100", index=False)
+        df_ASC_suite.to_excel(xlwriter, sheet_name=f"ASC RotD{percentile:.0f}", index=False)
         # df_ASC_suite.to_excel(xlwriter, sheet_name="ASC Ratios", index=False)
 
     # Write sheet if not empty
     if not df_SZ_target.empty:
-        df_SZ_target["110% SA"] = 1.1 * df_SZ_target["SA"]
         df_SZ_target.to_excel(xlwriter, sheet_name="SZ Target", index=False)
 
     # Again, since I was forced to include Periods in dict
@@ -487,7 +519,7 @@ def save_data(save_dir, ASC_target, ASC_suite, SZ_target, SZ_suite):
         # # Calculate ratios to guide re-matching; still useful?
         # SZ_ratios = np.divide(SZ_target['SA'], SZ_Average)
 
-        df_SZ_suite.to_excel(xlwriter, sheet_name="SZ GeoMean", index=False)
+        df_SZ_suite.to_excel(xlwriter, sheet_name=f"SZ RotD{percentile:.0f}", index=False)
         # df_SZ_suite.to_excel(xlwriter, sheet_name="SZ Ratios", index=False)
 
     xlwriter.close()
@@ -497,42 +529,51 @@ def main():
 
     ## REQUIRED INPUTS ##
     # # -> for scripting use
-    # input_dir = '../data/input_files/NP21.069' 
+    # input_dir = '../data/input_files/NP21.069'
     # # -> default location for dist
-    input_dir = os.path.join(os.getcwd(), "data", "input_files") 
+    input_dir = os.path.join(os.getcwd(), "data", "input_files")
 
     damping_ratio = detect_damping_ratio(input_dir)
+    percentile = detect_percentile(input_dir)
     periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
                         5, 7.5, 10], dtype=float)
     ## ####### ####### ##
-  
+
     # # -> for scripting use
     # output_dir = os.getcwd() + "./output_files"
     # # -> default location for dist
-    output_dir = os.path.join(os.getcwd(), "data", "output_files") 
+    output_dir = os.path.join(os.getcwd(), "data", "output_files")
     build_save_dir(output_dir)
 
     # Get target response spectra in suite directory
     ASC_target = import_ASC_target_spectra(input_dir)
     SZ_target = import_SZ_target_spectra(input_dir)
 
-    # Get RotD100-Component Response Spectra for ASC Suite
-    suite_rotd100_spectra = compute_suite_rotd100_spectra(input_dir, periods,
-                                                    damping_level=damping_ratio)
+    # Get RotDnn-Component Response Spectra for ASC Suite
+    if ASC_target != {}:
+        suite_rotdnn_ASC = compute_suite_rotdnn_spectra(input_dir, periods, 
+                'ASC', percentile=percentile, damping_level=damping_ratio)
+    else: suite_rotdnn_ASC = {}
+
+    # Get RotDnn-Component Response Spectra for SZ Suite
+    if SZ_target != {}:
+        suite_rotdnn_SZ = compute_suite_rotdnn_spectra(input_dir, periods, 
+                'SZ', percentile=percentile, damping_level=damping_ratio)
+    else: suite_rotdnn_SZ = {}
 
     # Get GeoMean-Component Response Spectra for SZ Suite
-    suite_gm_spectra = compute_suite_geomean_spectra(input_dir, periods,
-                                                    damping_level=damping_ratio)
+    # suite_gm_spectra = compute_suite_geomean_spectra(input_dir, periods,
+    #                     damping_level=damping_ratio)
 
     # Plot the output spectra - saved in an output dir
-    plot_ASC_matching_assessment(output_dir, ASC_target, suite_rotd100_spectra,
-                                damping_level=damping_ratio)
-    plot_SZ_matching_assessment(output_dir, SZ_target, suite_gm_spectra,
-                                damping_level=damping_ratio)
+    plot_matching_assessment(output_dir, 'ASC', ASC_target, suite_rotdnn_ASC,
+                        percentile=percentile, damping_level=damping_ratio)
+    plot_matching_assessment(output_dir, 'SZ', SZ_target, suite_rotdnn_SZ,
+                        percentile=percentile, damping_level=damping_ratio)
 
     # Write the data to spreadsheet
-    save_data(output_dir, ASC_target, suite_rotd100_spectra, SZ_target,
-                suite_gm_spectra)
+    save_data(output_dir, ASC_target, suite_rotdnn_ASC, SZ_target,
+                suite_rotdnn_SZ, percentile)
 
     end_time = time.time()
     # Log run statistics
