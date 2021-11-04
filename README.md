@@ -25,7 +25,7 @@ Bug fixes, addition of UI, and other improvements are ongoing but this shall wor
 2. SZ records should have components with (SZ1, SZ2) in their respective filenames.
 
 Organization of files upon running (sample provided in `sample` folder):
->      |-- Matching-Assessment.exe    
+>      |-- Matching_Assessment.exe    
 >      |-- data/
 >         |-- input_files/
 >             |-- 01 [Record_1]
