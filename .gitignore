@@ -1,6 +1,9 @@
 # Node .js files
 node_modules/
 
+# exe files (in releases)
+dist/
+
 # Build files for bundled exe
 build/
 *.spec

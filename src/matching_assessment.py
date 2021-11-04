@@ -275,9 +275,8 @@ def compute_suite_rotdnn_spectra(suite_dir, periods, trt,
 
     # raise warning for duplicate prefixes?
     # raise warning if file prefix is not the same with dir prefix
-    for i in np.arange(len(dir_list) + 1):
-        suite_list.extend([dir for dir in dir_list \
-                            if dir.startswith('{:0>2}'.format(i))])
+    suite_list.extend([dir for dir in dir_list \
+                            if dir[:2].isdigit()])
     # this is a repetitive check; revise later
     # bug alert: code proceeds if across pairs are defined in input_files
     # for example: if FN and H2 are defined instead of FN,FP or H1,H2
