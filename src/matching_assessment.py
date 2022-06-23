@@ -534,8 +534,7 @@ def main():
 
     damping_ratio = detect_damping_ratio(input_dir)
     percentile = detect_percentile(input_dir)
-    periods = np.array([0.01, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1, 2, 3, 4,
-                        5, 7.5, 10], dtype=float)
+    periods = np.logspace(-2, 1, num=120)
     ## ####### ####### ##
 
     # # -> for scripting use
